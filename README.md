@@ -3,7 +3,7 @@
 ## Description
 
 This is a code enables a slack app to render a playable tic-tac-toe game. A slack app will need to be created first and a few configurations will need to be made in order to play the game.  
-While the app is running, simply type _/tic-tac-toe_ in a slack _channel_ in order to run the game. Multiple games can be played at once.
+While the app is running, simply type _/tic-tac-toe_ in a slack _channel_ in order to run the game (make sure that the slack app has been invited to the channel). Multiple games can be played at once.
 
 ## Configuration
 
