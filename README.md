@@ -11,7 +11,7 @@ Follow the instructions on the [slack tutorials page](https://api.slack.com/star
 
 The first player, second player and untouched values are configurable (see game.py).
 
-There are a few tests which can be run with the command `python test_app.py`.
+There are a few tests which can be run with the command `python test_game.py`.
 
 **IMPORTANT NOTE**: To display the display name of the user that last played, make sure that the slack bot has `users:read` permission. `users:read` permission can be added to a slack bot by going to the slack bot page overview and then navigating to OAuth & Permissions -> Scopes -> Add an OAuth Scope. If this is not enabled, make sure that the lines `display_name = getDisplayName(body['user']['id'])` and `header = renderHeader(f'-- Turn {current} ( {display_name} played {previous} )')` in app.py are commented out.
 
