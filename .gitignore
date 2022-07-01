@@ -1,0 +1,4 @@
+ngrok
+*.pyc
+.venv
+__pycache__

@@ -7,14 +7,16 @@ While the app is running, simply type _/tic-tac-toe_ in a slack _channel_ in ord
 
 ## Configuration
 
-Follow the instructions on the [slack tutorials page](https://api.slack.com/start/building/bolt-python). The instructions eventually talk about creating/copying an app.py file. Copy the app.py file here instead and then run the python file.
+Follow the instructions on the [slack tutorials page](https://api.slack.com/start/building/bolt-python). The instructions eventually talk about creating/copying an app.py file. Add the files from the project folder here instead. The command will still be `python3 app.py` to start the bolt server.
+
+The first player, second player and untouched values are configurable (see game.py).
+
+There are a few tests which can be run with the command `python test_app.py`.
+
+**IMPORTANT NOTE**: To display the display name of the user that last played, make sure that the slack bot has `users:read` permission. `users:read` permission can be added to a slack bot by going to the slack bot page overview and then navigating to OAuth & Permissions -> Scopes -> Add an OAuth Scope. If this is not enabled, make sure that the lines `display_name = getDisplayName(body['user']['id'])` and `header = renderHeader(f'-- Turn {current} ( {display_name} played {previous} )')` in app.py are commented out.
 
 ## Future Work
 
-- Create a recursive function for checking for the winner
-
-  - Would it be worth the extra complexity for a small recursion depth?
-
 - Respond to the slack event
 
-- Add some user text to the header in order to log what user pressed the button
+- Add some user text to the header in order to log what user pressed the button &#9745;

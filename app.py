@@ -3,6 +3,8 @@ import json
 from slack_bolt import App
 from slack_sdk import WebClient
 
+from game import *
+
 # Initializes your app with your bot token and signing secret
 app = App(
     token=os.environ.get('SLACK_BOT_TOKEN'),
@@ -21,41 +23,6 @@ index_to_tic = {
     7: '21',
     8: '22'
 }
-
-def baseGame():
-    return [['-','-','-'], ['-','-','-'], ['-','-','-']]
-
-def threeInRow(board, row, column, row_one, column_one, row_two, column_two):
-    if board[row][column] == '-':
-        return False
-    return board[row][column] == board[row + row_one][column + column_one] and board[row + row_one][column + column_one] == board[row + row_two][column + column_two]
-
-
-def checkTie(board):
-    for row in range(0,3):
-        for column in range(0,3):
-            if board[row][column] == '-':
-                return False
-    return True
-
-def checkWinner(board):
-    # X X X   - - -   - - -
-    # - - -   X X X   - - -
-    # - - -   - - -   X X X
-    if threeInRow(board, 0, 0, 0, 1, 0, 2) or threeInRow(board, 1, 0, 0, 1, 0, 2) or threeInRow(board, 2, 0, 0, 1, 0, 2):
-        return True
-    # X - -   - X -   - - X
-    # X - -   - X -   - - X
-    # X - -   - X -   - - X
-    if threeInRow(board, 0, 0, 1, 0, 2, 0) or threeInRow(board, 0, 1, 1, 0, 2, 0) or threeInRow(board, 0, 2, 1, 0, 2, 0):
-        return True
-    # X - -   - - X
-    # - X -   - X -
-    # - - X   X - - 
-    if threeInRow(board, 0, 0, 1, 1, 2, 2) or threeInRow(board, 0, 2, 1, -1, 2, -2):
-        return True
-    
-    return False
 
 def renderHeader(text):
     return {
@@ -108,11 +75,6 @@ def buildView(header, buttons):
         ]
       }
 
-def getOpposite(value):
-    if value == 'X':
-        return 'O'
-    return 'X'
-
 # Home Tab
 @app.event('app_home_opened')
 def updateHomeTab(client, event, logger):
@@ -141,7 +103,7 @@ def updateHomeTab(client, event, logger):
 def slashCommand(ack, respond, command):
     ack()
     try:
-        game = baseGame()
+        game = getBaseGame()
         buttons = renderButtons(game)
         header = renderHeader('Press a square to begin')
         view=buildView(header, buttons)
@@ -149,7 +111,7 @@ def slashCommand(ack, respond, command):
         meta_data = {
             'end_game': False,
             'game': game,
-            'current': 'X'
+            'current': firstPlayerValue
         }
 
         meta_data_text = json.dumps(meta_data)
@@ -170,25 +132,37 @@ for index in range(0,9):
     @app.action('button_'+ index_to_tic[index])
     def buttonPressed(ack, body, client):
         ack()
+        print(body['user']['id'])
+        # Must have users:read permission to use this, see note in README
+        display_name = getDisplayName(body['user']['id'])
         meta_data = json.loads(body['message']['text'])
 
+        # Do not change anything after the game has ended
         if meta_data['end_game']:
             return
 
+        # The button stores which row and column was pressed
+        # button_01 means 0 is the row and 1 is the column
         button = body['actions'][0]['action_id']
         row = button[len(button) - 2]
         column = button[len(button) - 1]
         
-        if meta_data['game'][int(row)][int(column)] != '-':
+        # If the button already has a value do not change the button
+        if meta_data['game'][int(row)][int(column)] != untouchedValue:
             return
-        meta_data['game'][int(row)][int(column)] = meta_data['current']
-        meta_data['current'] = getOpposite(meta_data['current'])
+        # Update the button from untouchedValue to current and update current
+        previous = meta_data['current']
+        current = getOpposite(meta_data['current'])
+        meta_data['game'][int(row)][int(column)] = previous
+        meta_data['current'] = current
 
+        # Render the buttons and header with the new game data
         buttons = renderButtons(meta_data['game'])
-        header = renderHeader('-- Turn ' + meta_data['current'])
+        header = renderHeader(f'-- Turn {current} ( {display_name} played {previous} )')
+        # header = renderHeader(f'-- Turn {current}')
 
         if checkWinner(meta_data['game']):
-            header = renderHeader('Winner '+ getOpposite(meta_data['current']))
+            header = renderHeader('Winner '+ previous)
             meta_data['end_game'] = True
 
         if checkTie(meta_data['game']):
@@ -207,6 +181,18 @@ for index in range(0,9):
             )
         except Exception as e:
             print(f'Error with button press: ' + button)
+            print(e)
+
+def getDisplayName(user_id):
+    try:
+    # Call the users.info method using the WebClient
+        result = client.users_info(
+            user=user_id
+        )
+        return result['user']['profile']['display_name']
+
+    except Exception as e:
+            print(f'Error getting display_name for: ' + user_id)
             print(e)
 
 # Start your app
